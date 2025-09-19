@@ -1,0 +1,51 @@
+body { 
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+    background:#f7f9fb; 
+    margin:0;
+    padding:0;
+}
+.navbar-brand {
+     font-weight:600; 
+    }
+
+.card { 
+    border-radius: 8px;
+    background:#f8f9fa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+}
+
+ .card:hover {
+  transform: translateY(-3px);
+}
+
+ /* badges for crowd status  */
+.badge-low { background:#28a745; }
+.badge-medium { background:#ffc107; color:#212529;}
+.badge-high { background:#dc3545; }
+
+/* Chart area spacing */
+#crowdChart {
+  max-width: 100%;
+  height: auto;
+  margin-top: 20px;
+}
+
+/* Optional: adjust small screen spacing */
+@media (max-width: 576px) {
+  .card { margin-bottom: 15px; }
+}
+
+/* Footer */
+.site-footer {
+  background: #343a40;     /* dark grey like a navbar */
+  color: #f8f9fa;          /* light text */
+  border-top: 2px solid #dc3545; /* subtle accent line */
+}
+
+.site-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
