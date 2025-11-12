@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crowd Guardian | Live Dashboard</title>
+
+  <!-- Bootstrap & Leaflet CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f8f9fa;
+      color: #212529;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* 🌙 Dark Mode Enhancements */
+    body.dark-mode {
+      background-color: #0b1727 !important;
+      color: #f8f9fa !important;
+    }
+
+    body.dark-mode .navbar {
+      background-color: #1a2533 !important;
+    }
+
+    body.dark-mode .card {
+      background-color: #1e2a3a !important;
+      color: #f8f9fa !important;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode h1,
+    body.dark-mode h2,
+    body.dark-mode h3,
+    body.dark-mode h4,
+    body.dark-mode h5,
+    body.dark-mode h6,
+    body.dark-mode p,
+    body.dark-mode span,
+    body.dark-mode strong {
+      color: #f8f9fa !important;
+    }
+
+    /* Chart Text Fix */
+    body.dark-mode canvas {
+      filter: brightness(1.1);
+    }
+
+    nav.navbar {
+      background-color: #0d6efd;
+    }
+
+    nav.navbar .navbar-brand,
+    nav.navbar .nav-link {
+      color: white !important;
+    }
+
+    #map {
+      height: 400px;
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .progress {
+      height: 20px;
+      border-radius: 10px;
+    }
+
+    footer {
+      background: #0d6efd;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      margin-top: 40px;
+      width: 100%;
+    }
+
+    #pieChart {
+      max-width: 300px;
+      max-height: 300px;
+      margin: 15px auto;
+      display: block;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    #dashboardHeader {
+      margin-top: 30px;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm px-3">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">Crowd Guardian</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <a class="nav-link active text-white" href="dashboard.html">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="about.html">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white" href="report.html">Report Crowd</a>
+          </li>
+          <li class="nav-item">
+            <button id="darkToggle" class="btn btn-light btn-sm me-3">Dark Mode</button>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm" href="login.html">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== Header ===== -->
+  <div id="dashboardHeader" class="d-flex justify-content-between align-items-center mt-4 mb-3 px-4">
+    <div class="flex-grow-1 text-center">
+      <h3 class="fw-bold text-primary m-0">Live Crowd Dashboard</h3>
+    </div>
+    <div class="d-flex align-items-center me-4">
+      <span id="lastUpdated" class="text-muted small me-3">Last Updated: --:--:--</span>
+      <button id="refreshBtn" class="btn btn-outline-primary btn-sm">
+        <i id="refreshIcon" class="fas fa-sync-alt d-none"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== Map ===== -->
+  <div id="map"></div>
+
+  <div id="loading" class="text-center my-5" style="display:none;">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2">Loading live data...</p>
+  </div>
+
+  <!-- Placeholder Cards -->
+  <div id="placeholder" class="row g-3 mt-3">
+    <div class="col-md-4"><div class="card p-4 bg-light text-center placeholder-glow"><span class="placeholder col-6"></span></div></div>
+    <div class="col-md-4"><div class="card p-4 bg-light text-center placeholder-glow"><span class="placeholder col-7"></span></div></div>
+    <div class="col-md-4"><div class="card p-4 bg-light text-center placeholder-glow"><span class="placeholder col-5"></span></div></div>
+  </div>
+
+  <!-- Dynamic Cards Section -->
+  <div id="live" class="row g-3 mt-3 col-lg-7 mx-auto"></div>
+
+  <!-- ===== Charts ===== -->
+  <div class="card mt-4 p-4">
+    <h5 class="text-center">Crowd Distribution</h5>
+    <canvas id="crowdChart" height="120"></canvas>
+  </div>
+
+  <div class="card mt-4 p-4">
+    <h5 class="text-center">Crowd Trend Over Time</h5>
+    <canvas id="trendChart" height="120"></canvas>
+  </div>
+
+  <div class="card mt-4 p-4">
+    <h5 class="text-center">Crowd Composition (%)</h5>
+    <canvas id="pieChart" height="120"></canvas>
+  </div>
+
+  <!-- ✅ Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="updateToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">✅ Dashboard updated successfully!</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Footer ===== -->
+  <footer>
+    <p>© 2025 SmartCrowd</p>
+  </footer>
+
+  <!-- ===== JS Libraries ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- ===== Custom JS ===== -->
+  <script>
+    console.log("✅ SmartCrowd Dashboard Loaded");
+
+    // 🌙 Dark Mode
+    const toggleBtn = document.getElementById("darkToggle");
+    toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+      toggleBtn.textContent = isDark ? "Light Mode" : "Dark Mode";
+      toggleBtn.classList.toggle("btn-dark");
+      toggleBtn.classList.toggle("btn-light");
+    });
+
+    // 🗺 Initialize Map
+    const map = L.map("map").setView([17.385, 78.4867], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
+
+    let crowdChart, trendChart, pieChart;
+    let previousData = {};
+    let trendData = [];
+
+    function triggerFade(element) {
+      element.classList.remove("fade-in");
+      void element.offsetWidth;
+      element.classList.add("fade-in");
+    }
+
+    async function loadDashboardData() {
+      const loader = document.getElementById("loading");
+      const placeholder = document.getElementById("placeholder");
+      const cardsContainer = document.getElementById("live");
+
+      loader.style.display = "block";
+      placeholder.style.display = "flex";
+      cardsContainer.style.opacity = 0.2;
+
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return console.error("❌ No token found in localStorage");
+
+        const res = await fetch("http://localhost:8000/api/dashboard/data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch data");
+        const data = await res.json();
+
+        loader.style.display = "none";
+        placeholder.style.display = "none";
+        cardsContainer.style.opacity = 1;
+
+        let newPreviousData = {};
+        cardsContainer.innerHTML = "";
+        data.places.forEach((place) => {
+          const level =
+            place.crowdPercent < 40
+              ? "Low"
+              : place.crowdPercent < 70
+              ? "Moderate"
+              : "High";
+
+          const color =
+            level === "Low"
+              ? "bg-success"
+              : level === "Moderate"
+              ? "bg-warning"
+              : "bg-danger";
+
+          let trendIcon = "→";
+          let trendColor = "text-secondary";
+          if (previousData[place.name] !== undefined) {
+            const diff = place.crowdPercent - previousData[place.name];
+            if (diff > 5) {
+              trendIcon = "⬆";
+              trendColor = "text-success";
+            } else if (diff < -5) {
+              trendIcon = "⬇";
+              trendColor = "text-danger";
+            }
+          }
+
+          newPreviousData[place.name] = place.crowdPercent;
+
+          cardsContainer.innerHTML += `
+            <div class="col-md-4 fade-in">
+              <div class="card p-3 text-center shadow-sm">
+                <h5>${place.name}</h5>
+                <div class="progress mb-2">
+                  <div class="progress-bar ${color}" style="width:${place.crowdPercent}%">
+                    ${place.crowdPercent}%
+                  </div>
+                </div>
+                <p><strong>${level} Crowd</strong>
+                  <span class="${trendColor}">${trendIcon}</span>
+                </p>
+              </div>
+            </div>`;
+        });
+
+        previousData = newPreviousData;
+
+        // Map Markers
+        map.eachLayer((layer) => {
+          if (layer instanceof L.Marker) map.removeLayer(layer);
+        });
+
+        if (Array.isArray(data.places)) {
+          data.places.forEach((place) => {
+            const lat = place.latitude || place.lat;
+            const lng = place.longitude || place.lng;
+
+            if (lat && lng) {
+              const iconColor =
+                place.crowdPercent < 40
+                  ? "green"
+                  : place.crowdPercent < 70
+                  ? "orange"
+                  : "red";
+
+              const customIcon = L.divIcon({
+                html: `<div style="background:${iconColor};width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>`,
+              });
+
+              L.marker([lat, lng], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(`<b>${place.name}</b><br>Crowd: ${place.crowdPercent}%`);
+            }
+          });
+        }
+
+        // Charts
+  const ctx = document.getElementById("crowdChart").getContext("2d");
+if (crowdChart) crowdChart.destroy();
+
+crowdChart = new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: ["Low", "Moderate", "High"],
+    datasets: [
+      {
+        label: "Crowd Distribution (%)",
+        data: [
+          (data.lowCrowd / (data.lowCrowd + data.mediumCrowd + data.highCrowd)) * 100,
+          (data.mediumCrowd / (data.lowCrowd + data.mediumCrowd + data.highCrowd)) * 100,
+          (data.highCrowd / (data.lowCrowd + data.mediumCrowd + data.highCrowd)) * 100
+        ],
+        backgroundColor: ["#22c55e", "#facc15", "#ef4444"],
+        borderRadius: 8,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: {
+        display: true,
+        text: "Crowd Distribution (%)",
+        font: { size: 16 },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: (value) => value + "%",
+        },
+        title: {
+          display: true,
+          text: "Percentage (%)",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Crowd Levels",
+        },
+      },
+    },
+  },
+});
+
+
+    
+
+        // Trend Chart
+        const timeLabel = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const avgCrowd = Math.round((data.lowCrowd + data.mediumCrowd + data.highCrowd) / 3);
+        trendData.push({ time: timeLabel, value: avgCrowd });
+        if (trendData.length > 10) trendData.shift();
+
+        const tctx = document.getElementById("trendChart").getContext("2d");
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(tctx, {
+          type: "line",
+          data: {
+            labels: trendData.map((d) => d.time),
+            datasets: [
+              {
+                label: "Avg Crowd (%)",
+                data: trendData.map((d) => d.value),
+                borderColor: "#0d6efd",
+                backgroundColor: "rgba(13,110,253,0.2)",
+                fill: true,
+                tension: 0.3,
+              },
+            ],
+          },
+          options: { scales: { y: { beginAtZero: true, max: 100 } } },
+        });
+
+        // Pie Chart
+        const pctx = document.getElementById("pieChart").getContext("2d");
+        if (pieChart) pieChart.destroy();
+        pieChart = new Chart(pctx, {
+          type: "doughnut",
+          data: {
+            labels: ["Low", "Moderate", "High"],
+            datasets: [
+              {
+                data: [data.lowCrowd, data.mediumCrowd, data.highCrowd],
+                backgroundColor: ["#22c55e", "#facc15", "#ef4444"],
+                borderColor: "#ffffff",
+                borderWidth: 3,
+              },
+            ],
+          },
+          options: { cutout: "70%" },
+        });
+
+        triggerFade(cardsContainer);
+        new bootstrap.Toast(document.getElementById("updateToast")).show();
+
+        // 🕒 Update time
+        const now = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        document.getElementById("lastUpdated").textContent = `Last Updated: ${now}`;
+      } catch (err) {
+        console.error("❌ Error loading dashboard data:", err);
+        loader.style.display = "none";
+        placeholder.style.display = "none";
+      }
+    }
+
+    // 🕒 On Load
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      console.log("🔄 Dashboard loading...");
+      if (urlParams.get("refresh")) {
+        console.log("Refreshing dashboard after report submission...");
+        setTimeout(loadDashboardData, 500);
+      } else {
+        loadDashboardData();
+      }
+
+      setInterval(loadDashboardData, 30000);
+    });
+
+    // 🔄 Manual Refresh
+    const refreshBtn = document.getElementById("refreshBtn");
+    const refreshIcon = document.getElementById("refreshIcon");
+    refreshBtn.addEventListener("click", async () => {
+      refreshBtn.disabled = true;
+      refreshIcon.classList.remove("d-none");
+      await loadDashboardData();
+      refreshIcon.classList.add("d-none");
+      refreshBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>

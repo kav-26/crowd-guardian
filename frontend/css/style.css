@@ -1,51 +1,161 @@
-body { 
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-    background:#f7f9fb; 
-    margin:0;
-    padding:0;
-}
-.navbar-brand {
-     font-weight:600; 
-    }
-
-.card { 
-    border-radius: 8px;
-    background:#f8f9fa;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  transition: transform 0.2s ease;
+:root{
+  --primary: #1E3A8A;
+  --accent: #dc3545; /* red for chart/progress */
+  --muted: #6b7280;
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --text: #111827;
+  --success: #16a34a;
+  --warning: #f59e0b;
 }
 
- .card:hover {
-  transform: translateY(-3px);
+*{box-sizing:border-box}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background:var(--bg);
+  color:var(--text);
 }
 
- /* badges for crowd status  */
-.badge-low { background:#28a745; }
-.badge-medium { background:#ffc107; color:#212529;}
-.badge-high { background:#dc3545; }
+/* NAV */
+nav{background:var(--primary)}
+nav .navbar-brand{font-weight:700}
+nav .nav-link{color:#fff!important}
 
-/* Chart area spacing */
-#crowdChart {
-  max-width: 100%;
-  height: auto;
-  margin-top: 20px;
+/* HERO */
+.hero{
+  background:linear-gradient(90deg, rgba(30,58,138,0.08), rgba(220,53,69,0.03));
+  border-radius:10px;
+  padding:18px;
 }
 
-/* Optional: adjust small screen spacing */
+/* LAYOUT - two columns */
+#live { margin-bottom: 0; }
+
+/* PLACES CARDS container */
+#placesContainer {
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+/* individual card style (keeps same heights) */
+.place-card {
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  height:130px;
+  padding:14px;
+  border-radius:10px;
+  background:var(--card);
+  box-shadow: 0 6px 18px rgba(18,24,40,0.06);
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.place-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(18,24,40,0.09);
+}
+.place-card h5{margin:0 0 6px 0; font-size:1.02rem}
+.place-card .meta {font-size:.85rem; color:var(--muted)}
+.place-card .actions {display:flex; gap:8px; margin-top:8px}
+
+/* progress bar */
+.progress {height:14px; border-radius:10px; overflow:hidden; background:#eee}
+.progress-bar {font-weight:600}
+
+/* CARD GRID (below map) - equal heights via grid */
+#cardsGrid {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap:18px;
+}
+
+/* MAP */
+#mapContainer {padding:10px}
+#map { border-radius:8px; }
+
+/* legend under map */
+.map-legend {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  font-size:.9rem;
+  margin-top:10px;
+  color:var(--muted);
+}
+.map-legend .dot {display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px}
+.dot.low{background:var(--success)}
+.dot.medium{background:var(--warning)}
+.dot.high{background:var(--accent)}
+
+/* CHART CARD - ensure height */
+#crowdChart { width:100%; max-width:100%; height:260px; }
+
+/* FOOTER fix */
+footer {flex-shrink:0; margin-top:0;}
+
+/* DARK MODE toggle class */
+body.dark-mode {
+  --bg: #0b1220;
+  --card: #0f1724;
+  --text: #e6eef8;
+  --muted: #94a3b8;
+  background: var(--bg);
+  color: var(--text);
+}
+body.dark-mode nav { background:#0b1220; }
+body.dark-mode footer { background:#020617; }
+
+/* RESPONSIVE tweaks */
+@media (min-width: 992px) {
+  #placesContainer { grid-template-columns: 1fr 1fr; } /* two smaller cards per column */
+}
+@media (max-width: 991px) {
+  #map { height:360px; }
+}
 @media (max-width: 576px) {
-  .card { margin-bottom: 15px; }
+  .hero { padding:12px; }
+  .place-card { height:auto; }
 }
 
-/* Footer */
-.site-footer {
-  background: #343a40;     /* dark grey like a navbar */
-  color: #f8f9fa;          /* light text */
-  border-top: 2px solid #dc3545; /* subtle accent line */
+/* small utilities */
+.center {display:flex; align-items:center; justify-content:center}
+.hidden {display:none}
+
+body.dark-mode {
+  background-color: #121212 !important;
+  color: #e4e4e4 !important;
+}
+.dark-mode .card {
+  background-color: #1e1e1e !important;
+  color: #f5f5f5 !important;
+  border-color: #333 !important;
 }
 
-.site-footer p {
-  margin: 0;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
+
+#loading {
+  display: none; /* hidden by default */
 }
+#loading.active {
+  display: block;
+}
+
+#placeholder {
+  display: none;
+}
+#placeholder.active {
+  display: flex;
+}
+
+.marker-green div { background: #22c55e !important; }
+.marker-orange div { background: #facc15 !important; }
+.marker-red div { background: #ef4444 !important; }
+
+
+
+
+
+
 
