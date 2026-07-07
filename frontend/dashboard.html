@@ -271,7 +271,7 @@
         const token = localStorage.getItem("token");
         if (!token) return console.error("❌ No token found in localStorage");
 
-        const res = await fetch("http://localhost:8000/api/dashboard/data", {
+        const res = await fetch("https://crowd-guardian-zsn3.onrender.com/api/dashboard/data", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

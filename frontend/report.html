@@ -135,7 +135,7 @@
       return;
     }
 
-    const res = await fetch(`http://localhost:8000/api/places/${placeName}`, {
+    const res = await fetch(`https://crowd-guardian-zsn3.onrender.com/api/places/${placeName}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
