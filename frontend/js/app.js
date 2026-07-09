@@ -5,8 +5,17 @@ const token = localStorage.getItem('token');
 
 // loadUserProfile(); // keep your existing function call if present
 
-// ------------------ DYNAMIC PLACES (you already have the array named 'places') ------------------
-// Ensure `places` array is present as you posted earlier.
+// ------------------ DYNAMIC PLACES (fetched from backend) ------------------
+let places = [];
+
+async function loadPlaces() {
+  try {
+    const res = await fetch('https://crowd-guardian-zsn3.onrender.com/api/places');
+    places = await res.json();
+  } catch (err) {
+    console.error('Failed to load places:', err);
+  }
+}
 
 // ------------------ MAP (Leaflet) with color-coded markers ------------------
 let markers = {};
@@ -33,13 +42,16 @@ function createColoredMarker(lat, lng, color) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Initialize map (Hyderabad center)
   myMap = L.map('map').setView([17.3850, 78.4867], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(myMap);
+
+  // Load places from backend BEFORE using them
+  await loadPlaces();
 
   // Render markers from places
   markers = {};
@@ -209,4 +221,8 @@ document.getElementById('searchBtn').addEventListener('click', () => {
 document.getElementById('searchInput').addEventListener('keyup', (e) => {
   if (e.key === 'Enter') document.getElementById('searchBtn').click();
 });
+
+
+
+
 
