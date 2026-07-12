@@ -11,7 +11,8 @@ let places = [];
 async function loadPlaces() {
   try {
     const res = await fetch('https://crowd-guardian-zsn3.onrender.com/api/places');
-    places = await res.json();
+    const result = await res.json();
+    places = result.data || result || [];
   } catch (err) {
     console.error('Failed to load places:', err);
   }
